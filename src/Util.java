@@ -1,4 +1,5 @@
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
 import java.io.BufferedReader;
@@ -19,10 +20,13 @@ abstract public class Util {
 
     private static HttpClient client = HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1).build();
     private static Gson gson = new Gson();
-    private static String testUrl = "http://jsonplaceholder.typicode.com";
-    public static JsonObject getUsers() throws IOException, URISyntaxException, InterruptedException {
+    public static String testUrl = "http://jsonplaceholder.typicode.com";
+    public static JsonArray getUsers() throws IOException, URISyntaxException, InterruptedException {
         HttpResponse<String> response = sendGET(testUrl + "/users");
-        return gson.fromJson(response.body(), JsonObject.class);
+        return gson.fromJson(response.body(), JsonArray.class);
+    }
+    public static int maxUserId() throws IOException, URISyntaxException, InterruptedException {
+        return getUsers().asList().getLast().getAsJsonObject().get("id").getAsInt();
     }
     public static HttpResponse<String> sendGET(String Url) throws IOException, InterruptedException, URISyntaxException {
         HttpRequest request = HttpRequest.newBuilder()
@@ -37,6 +41,15 @@ abstract public class Util {
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(new URI(Url))
                 .POST(HttpRequest.BodyPublishers.ofString(jsonPayload))
+                .headers("Accept", "application/json")
+                .build();
+        return client.send(request, HttpResponse.BodyHandlers.ofString());
+    }
+
+    public static HttpResponse<String> sendPUT(String Url, String jsonPayload) throws IOException, URISyntaxException, InterruptedException {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(new URI(Url))
+                .PUT(HttpRequest.BodyPublishers.ofString(jsonPayload))
                 .headers("Accept", "application/json")
                 .build();
         return client.send(request, HttpResponse.BodyHandlers.ofString());
