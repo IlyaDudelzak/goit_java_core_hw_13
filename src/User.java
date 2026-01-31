@@ -48,38 +48,75 @@ public class User {
         private String catchPhrase;
         private String bs;
     }
-    private static class TaskError extends Exception {}
     public static List<User> getAllUsers() throws IOException, URISyntaxException, InterruptedException {
         HttpResponse<String> response = Util.sendGET(Util.testUrl + "/users");
         Type userListType = new TypeToken<List<User>>(){}.getType();
-        return Util.gson.fromJson(response.body(), userListType);
+        return gson.fromJson(response.body(), userListType);
     }
-    public static User getUser(int id) throws IOException, URISyntaxException, InterruptedException, TaskError {
-        User user =  getAllUsers().get(id);
-        if(user == null) throw new TaskError();
-        return user;
+    public static User getUser(int id) throws IOException, URISyntaxException, InterruptedException {
+        return getAllUsers().get(id);
     }
-    public static User getUser(String username) throws IOException, URISyntaxException, InterruptedException, TaskError {
-        User user =  getAllUsers().get();
-        if(user == null) throw new TaskError();
-        return user;
+    public static User getUser(String username) throws IOException, URISyntaxException, InterruptedException {
+        List<User> users = getAllUsers();
+        for(User user: users){
+            if(user.getName().equalsIgnoreCase(username)){
+                return user;
+            }
+        }
+        return null;
     }
     public static int maxUserId() throws IOException, URISyntaxException, InterruptedException {
         List<User> users = getAllUsers();
         if (users.isEmpty()) return 0;
         return users.getLast().getId();
     }
-    public static HttpResponse<String> deleteUser(int id) throws URISyntaxException, IOException, InterruptedException, TaskError {
-        HttpResponse<String> response = Util.sendDELETE(Util.testUrl + "/users/" + id);
-        if((int)(response.statusCode() / 100) != 2) throw new TaskError();
-        return response;
+    public static HttpResponse<String> deleteUser(int id) throws URISyntaxException, IOException, InterruptedException {
+        return Util.sendDELETE(Util.testUrl + "/users/" + id);
     }
     public HttpResponse<String> createUser() throws IOException, URISyntaxException, InterruptedException {
         String jsonBody = Util.gson.toJson(this);
-        HttpResponse<String> response = Util.sendPOST(Util.testUrl + "/users", jsonBody);
+        return Util.sendPOST(Util.testUrl + "/users", jsonBody);
     }
     public HttpResponse<String> updateUser() throws IOException, URISyntaxException, InterruptedException {
         String jsonBody = gson.toJson(this);
-        HttpResponse<String> response = Util.sendPUT(Util.testUrl + "/users/" + this.id, jsonBody);
+        return Util.sendPUT(Util.testUrl + "/users/" + this.id, jsonBody);
+    }
+    public static List<Post> getAllPosts(int id) throws IOException, URISyntaxException, InterruptedException {
+        HttpResponse<String> response = Util.sendGET(Util.testUrl + "/users/" + id + "/posts");
+        Type postListType = new TypeToken<List<Post>>(){}.getType();
+        return Util.gson.fromJson(response.body(), postListType);
+    }
+    public static Post getLastPost(int id) throws IOException, URISyntaxException, InterruptedException {
+        List<Post> posts = getAllPosts(id);
+        return posts.getLast();
+    }
+    public List<Post> getAllPosts() throws IOException, URISyntaxException, InterruptedException {
+        HttpResponse<String> response = Util.sendGET(Util.testUrl + "/users/" + id + "/posts");
+        Type postListType = new TypeToken<List<Post>>(){}.getType();
+        return Util.gson.fromJson(response.body(), postListType);
+    }
+    public Post getLastPost() throws IOException, URISyntaxException, InterruptedException {
+        List<Post> posts = getAllPosts();
+        return posts.getLast();
+    }
+    public static List<Todo> getAllTasks(int id) throws IOException, URISyntaxException, InterruptedException {
+        HttpResponse<String> response = Util.sendGET(Util.testUrl + "/users/" + id + "/todos");
+        Type todoListType = new TypeToken<List<Todo>>(){}.getType();
+        return Util.gson.fromJson(response.body(), todoListType);
+    }
+    public static List<Todo> getAllOpenTasks(int id) throws IOException, URISyntaxException, InterruptedException {
+        return getAllTasks(id).stream()
+                .filter(todo -> !todo.isCompleted())
+                .toList();
+    }
+    public List<Todo> getAllTasks() throws IOException, URISyntaxException, InterruptedException {
+        HttpResponse<String> response = Util.sendGET(Util.testUrl + "/users/" + id + "/todos");
+        Type todoListType = new TypeToken<List<Todo>>(){}.getType();
+        return Util.gson.fromJson(response.body(), todoListType);
+    }
+    public List<Todo> getAllOpenTasks() throws IOException, URISyntaxException, InterruptedException {
+        return getAllTasks().stream()
+                .filter(todo -> !todo.isCompleted())
+                .toList();
     }
 }
